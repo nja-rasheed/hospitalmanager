@@ -34,7 +34,7 @@ export default function DashboardPage() {
         <StatsCard title="Total Patients" value={patients.length} color="blue" />
         <StatsCard title="Available Beds" value={availableBeds.length} color="green" />
         <StatsCard title="Waiting Queue" value={waitingAppointments.length} color="yellow" />
-        <StatsCard title="Current Admissions" value={currentAdmissions.length} color="purple" />
+        <StatsCard title="Current Admissions" value={currentAdmissions.length} color="red" />
       </div>
 
       {/* Navigation Cards */}
@@ -105,7 +105,7 @@ export default function DashboardPage() {
         <StatsCard title="Total Patients" value={patients.length} color="blue" />
         <StatsCard title="Available Beds" value={availableBeds.length} color="green" />
         <StatsCard title="Waiting Queue" value={waitingAppointments.length} color="yellow" />
-        <StatsCard title="Current Admissions" value={currentAdmissions.length} color="purple" />
+        <StatsCard title="Current Admissions" value={currentAdmissions.length} color="red" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
