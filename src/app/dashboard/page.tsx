@@ -2,135 +2,163 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useUser } from '../../lib/UserContext';
 import { useAppointments, useBeds, useAdmissions, useInventory, usePatients } from '../../hooks/useHospitalData';
-import { Card } from '../../components/UI';
-import { StatsCard, Table } from '../../components/Table';
+import { Button, Input, Card, Select } from '../../components/UI';
+import { StatsCard } from '../../components/Table';
+import { Modal, Alert } from '../../components/Modal';
+import RoleGuard from '../../components/RoleGuard';
 
 export default function DashboardPage() {
-  const { user } = useUser();
-  const [userRole, setUserRole] = useState<'admin' | 'staff' | 'patient'>('admin'); // Demo role selector
-  
   const { appointments } = useAppointments();
-  const { beds, availableBeds, occupiedBeds } = useBeds();
+  const { availableBeds } = useBeds();
   const { admissions } = useAdmissions();
   const { inventory } = useInventory();
   const { patients } = usePatients();
 
-  // Calculate dashboard stats
-  const waitingPatients = appointments.filter(apt => apt.status === 'waiting').length;
-  const currentAdmissions = admissions.filter(adm => adm.status === 'admitted').length;
-  const lowStockItems = inventory.filter(item => item.stock < 10).length;
-  const recentPatients = patients.slice(0, 5);
-  const recentAppointments = appointments.slice(0, 5);
+  const [userRole, setUserRole] = useState<'admin' | 'staff' | 'patient'>('admin');
 
+  // Calculate stats
+  const waitingAppointments = appointments.filter(apt => apt.status === 'waiting');
+  const currentAdmissions = admissions.filter(adm => adm.status === 'admitted');
+  const lowStockItems = inventory.filter(item => item.stock < 10);
+
+  // In case you want to show patient queue length (OPD)
+  const waitingPatients = waitingAppointments.length;
+
+  // Admin dashboard
   const renderAdminDashboard = () => (
     <div className="space-y-6">
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <h1 className="text-3xl font-bold text-gray-900">Hospital Management Dashboard</h1>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatsCard title="Total Patients" value={patients.length} color="blue" />
         <StatsCard title="Available Beds" value={availableBeds.length} color="green" />
-        <StatsCard title="Current Admissions" value={currentAdmissions} color="yellow" />
-        <StatsCard title="Low Stock Items" value={lowStockItems} color="red" />
+        <StatsCard title="Waiting Queue" value={waitingAppointments.length} color="yellow" />
+        <StatsCard title="Current Admissions" value={currentAdmissions.length} color="purple" />
       </div>
 
-      {/* Quick Actions */}
-      <Card title="Quick Actions">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link href="/opd" className="p-4 bg-blue-50 rounded-lg text-center hover:bg-blue-100 transition-colors">
-            <div className="text-blue-600 font-semibold">OPD Queue</div>
-            <div className="text-sm text-gray-600">Manage appointments</div>
-          </Link>
-          <Link href="/beds" className="p-4 bg-green-50 rounded-lg text-center hover:bg-green-100 transition-colors">
-            <div className="text-green-600 font-semibold">Bed Management</div>
-            <div className="text-sm text-gray-600">View bed status</div>
-          </Link>
-          <Link href="/admissions" className="p-4 bg-yellow-50 rounded-lg text-center hover:bg-yellow-100 transition-colors">
-            <div className="text-yellow-600 font-semibold">Admissions</div>
-            <div className="text-sm text-gray-600">Admit/discharge patients</div>
-          </Link>
-          <Link href="/inventory" className="p-4 bg-red-50 rounded-lg text-center hover:bg-red-100 transition-colors">
-            <div className="text-red-600 font-semibold">Inventory</div>
-            <div className="text-sm text-gray-600">Manage stock</div>
-          </Link>
-        </div>
-      </Card>
+      {/* Navigation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* OPD Queue - Available to all */}
+        <Link href="/opd" className="block">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-2">OPD Queue</h3>
+              <p className="text-gray-600">Manage patient appointments and queue</p>
+            </div>
+          </Card>
+        </Link>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Recent Patients">
-          <div className="space-y-2">
-            {recentPatients.map((patient, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <span className="font-medium">{patient.name}</span>
-                <span className="text-sm text-gray-600">{patient.age} years</span>
+        {/* Bed Management - Admin & Staff only */}
+        <RoleGuard allowed={['admin', 'staff']}>
+          <Link href="/beds" className="block">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Bed Management</h3>
+                <p className="text-gray-600">Monitor bed availability and assignments</p>
               </div>
-            ))}
-          </div>
-        </Card>
-        
-        <Card title="Today's Appointments">
-          <div className="space-y-2">
-            {recentAppointments.map((apt, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <span className="font-medium">{apt.patient_name}</span>
-                <span className={`px-2 py-1 rounded text-xs ${
-                  apt.status === 'waiting' ? 'bg-yellow-100 text-yellow-800' :
-                  apt.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  {apt.status}
-                </span>
+            </Card>
+          </Link>
+        </RoleGuard>
+
+        {/* Admissions - Admin & Staff only */}
+        <RoleGuard allowed={['admin', 'staff']}>
+          <Link href="/admissions" className="block">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Admissions</h3>
+                <p className="text-gray-600">Handle patient admissions and discharges</p>
               </div>
-            ))}
-          </div>
-        </Card>
+            </Card>
+          </Link>
+        </RoleGuard>
+
+        {/* Inventory - Admin & Staff only */}
+        <RoleGuard allowed={['admin', 'staff']}>
+          <Link href="/inventory" className="block">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Inventory</h3>
+                <p className="text-gray-600">Track medicines and medical supplies</p>
+              </div>
+            </Card>
+          </Link>
+        </RoleGuard>
       </div>
+
+      {/* Alerts */}
+      {lowStockItems.length > 0 && (
+        <Alert
+          type="error"
+          message={`${lowStockItems.length} items are running low on stock`}
+          onClose={() => {}}
+        />
+      )}
     </div>
   );
 
+  // Staff dashboard (same as admin, but could be more limited)
   const renderStaffDashboard = () => (
     <div className="space-y-6">
-      {/* Staff-specific stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatsCard title="Waiting Patients" value={waitingPatients} color="yellow" />
+      <h1 className="text-3xl font-bold text-gray-900">Hospital Staff Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatsCard title="Total Patients" value={patients.length} color="blue" />
         <StatsCard title="Available Beds" value={availableBeds.length} color="green" />
-        <StatsCard title="Current Admissions" value={currentAdmissions} color="blue" />
+        <StatsCard title="Waiting Queue" value={waitingAppointments.length} color="yellow" />
+        <StatsCard title="Current Admissions" value={currentAdmissions.length} color="purple" />
       </div>
 
-      {/* Staff Quick Actions */}
-      <Card title="Staff Actions">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Link href="/opd" className="p-4 bg-blue-50 rounded-lg text-center hover:bg-blue-100 transition-colors">
-            <div className="text-blue-600 font-semibold">Manage Queue</div>
-          </Link>
-          <Link href="/admissions" className="p-4 bg-green-50 rounded-lg text-center hover:bg-green-100 transition-colors">
-            <div className="text-green-600 font-semibold">Patient Admission</div>
-          </Link>
-          <Link href="/beds" className="p-4 bg-yellow-50 rounded-lg text-center hover:bg-yellow-100 transition-colors">
-            <div className="text-yellow-600 font-semibold">Bed Status</div>
-          </Link>
-        </div>
-      </Card>
-
-      {/* Current Queue */}
-      <Card title="Current OPD Queue">
-        <div className="space-y-2">
-          {appointments.filter(apt => apt.status === 'waiting').slice(0, 10).map((apt, index) => (
-            <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-              <div>
-                <span className="font-medium">#{apt.queue_number} {apt.patient_name}</span>
-              </div>
-              <span className="text-sm text-gray-600">
-                {new Date(apt.appointment_time).toLocaleTimeString()}
-              </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Link href="/opd" className="block">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-2">OPD Queue</h3>
+              <p className="text-gray-600">Manage patient appointments and queue</p>
             </div>
-          ))}
-        </div>
-      </Card>
+          </Card>
+        </Link>
+        <RoleGuard allowed={['admin', 'staff']}>
+          <Link href="/beds" className="block">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Bed Management</h3>
+                <p className="text-gray-600">Monitor bed availability and assignments</p>
+              </div>
+            </Card>
+          </Link>
+        </RoleGuard>
+        <RoleGuard allowed={['admin', 'staff']}>
+          <Link href="/admissions" className="block">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Admissions</h3>
+                <p className="text-gray-600">Handle patient admissions and discharges</p>
+              </div>
+            </Card>
+          </Link>
+        </RoleGuard>
+        <RoleGuard allowed={['admin', 'staff']}>
+          <Link href="/inventory" className="block">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">Inventory</h3>
+                <p className="text-gray-600">Track medicines and medical supplies</p>
+              </div>
+            </Card>
+          </Link>
+        </RoleGuard>
+      </div>
+      {lowStockItems.length > 0 && (
+        <Alert
+          type="error"
+          message={`${lowStockItems.length} items are running low on stock`}
+          onClose={() => {}}
+        />
+      )}
     </div>
   );
 
+  // Patient dashboard
   const renderPatientDashboard = () => (
     <div className="space-y-6">
       <Card title="Patient Portal">
@@ -142,7 +170,6 @@ export default function DashboardPage() {
           </Link>
         </div>
       </Card>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card title="Your Appointments">
           <div className="space-y-2">
@@ -155,7 +182,6 @@ export default function DashboardPage() {
             ))}
           </div>
         </Card>
-
         <Card title="Hospital Information">
           <div className="space-y-3">
             <div className="p-3 bg-green-50 rounded">
@@ -174,13 +200,12 @@ export default function DashboardPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        
         {/* Demo Role Switcher */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Demo Role:</span>
-          <select 
-            value={userRole} 
-            onChange={(e) => setUserRole(e.target.value as any)}
+          <select
+            value={userRole}
+            onChange={(e) => setUserRole(e.target.value as 'admin' | 'staff' | 'patient')}
             className="px-3 py-1 border border-gray-300 rounded text-sm"
           >
             <option value="admin">Admin</option>
@@ -189,7 +214,6 @@ export default function DashboardPage() {
           </select>
         </div>
       </div>
-
       {userRole === 'admin' && renderAdminDashboard()}
       {userRole === 'staff' && renderStaffDashboard()}
       {userRole === 'patient' && renderPatientDashboard()}

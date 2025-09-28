@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { useBeds, useAdmissions } from '../../hooks/useHospitalData';
-import { Button, Input, Card, Select } from '../../components/UI';
+import { Button } from '../../components/UI';
 import { Table } from '../../components/Table';
-import { Modal, Alert } from '../../components/Modal';
+import { Modal } from '../../components/Modal';
 import { DashboardLayout } from '../../components/DashboardLayout';
 import { DashboardCard } from '../../components/DashboardCard';
 import RoleGuard from '../../components/RoleGuard';
@@ -58,28 +58,26 @@ export default function BedsPage() {
   const bedColumns = [
     { key: 'bed_number', header: 'Bed Number' },
     { key: 'ward', header: 'Ward' },
-    { key: 'status', header: 'Status', render: (value: string) => (
+    { key: 'status', header: 'Status', render: (value: unknown) => (
       <span className={`px-2 py-1 rounded text-sm ${
         value === 'available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
       }`}>
-        {value}
+        {String(value)}
       </span>
     )},
-    { key: 'patient_id', header: 'Patient ID', render: (value: string) => value || '-' },
-    { key: 'actions', header: 'Actions', render: (value: any, row: any) => (
-      <RoleGuard allowed={['admin', 'staff']}>
-        <div className="flex gap-2">
-          {row.status === 'occupied' && (
-            <Button 
-              size="sm" 
-              variant="danger" 
-              onClick={() => handleDischarge(row.id, row.patient_id)}
-            >
-              Discharge
-            </Button>
-          )}
-        </div>
-      </RoleGuard>
+    { key: 'patient_id', header: 'Patient ID', render: (value: unknown) => String(value) || '-' },
+    { key: 'actions', header: 'Actions', render: (_value: unknown, row: Record<string, unknown>) => (
+      <div className="flex gap-2">
+        {row.status === 'occupied' && (
+          <Button 
+            size="sm" 
+            variant="danger" 
+            onClick={() => handleDischarge(String(row.id), String(row.patient_id))}
+          >
+            Discharge
+          </Button>
+        )}
+      </div>
     )}
   ];
 

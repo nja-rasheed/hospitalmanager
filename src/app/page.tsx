@@ -99,7 +99,7 @@ export default function HomePage() {
               subtitle="Ready for patients"
             />
             <DashboardCard
-              title="Today's Queue"
+              title="Today&apos;s Queue"
               value={todayAppointments.length}
               icon="📅"
               color="purple"
@@ -166,7 +166,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {quickActions.map((action) => (
-              <RoleGuard key={action.title} allowed={action.roles}>
+              <RoleGuard key={action.title} allowed={[...action.roles]}>
                 <Link
                   href={action.href}
                   className="group bg-white p-6 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
@@ -268,7 +268,7 @@ export default function HomePage() {
                       </ul>
                     </div>
                     <div>
-                      <span className="font-medium text-purple-700">Today's Summary:</span>
+                      <span className="font-medium text-purple-700">Today&apos;s Summary:</span>
                       <ul className="mt-1 space-y-1 text-purple-600">
                         <li>• {todayAppointments.length} appointments</li>
                         <li>• {currentAdmissions.length} admissions</li>
