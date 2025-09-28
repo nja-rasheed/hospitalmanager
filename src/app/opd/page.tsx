@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAppointments, usePatients } from '../../hooks/useHospitalData';
 import { DashboardLayout } from '../../components/DashboardLayout';
 import { DashboardCard } from '../../components/DashboardCard';
+import RoleGuard from '../../components/RoleGuard';
 
 export default function OPDPage() {
   const { appointments, bookAppointment, updateAppointmentStatus } = useAppointments();
@@ -206,18 +207,14 @@ export default function OPDPage() {
 
         {/* Queue Display */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Current Queue</h3>
-          </div>
           <div className="divide-y divide-gray-200">
             {waitingAppointments.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <span className="text-4xl mb-4 block">📋</span>
                 <p className="text-lg font-medium">No patients in queue</p>
-                <p className="text-sm">Book an appointment to get started</p>
               </div>
             ) : (
-              waitingAppointments.map((appointment, index) => (
+              waitingAppointments.map((appointment) => (
                 <div key={appointment.id} className="p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -229,25 +226,24 @@ export default function OPDPage() {
                         <p className="text-sm text-gray-600">
                           Booked: {new Date(appointment.appointment_time).toLocaleTimeString()}
                         </p>
-                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full mt-1">
-                          Waiting
-                        </span>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => updateAppointmentStatus(appointment.id, 'in-progress')}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
-                      >
-                        Start Consultation
-                      </button>
-                      <button
-                        onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors"
-                      >
-                        Complete
-                      </button>
-                    </div>
+                    <RoleGuard allowed={['admin', 'staff']}>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => updateAppointmentStatus(appointment.id, 'in-progress')}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                        >
+                          Start Consultation
+                        </button>
+                        <button
+                          onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                        >
+                          Complete
+                        </button>
+                      </div>
+                    </RoleGuard>
                   </div>
                 </div>
               ))
@@ -276,12 +272,14 @@ export default function OPDPage() {
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors"
-                    >
-                      Complete Consultation
-                    </button>
+                    <RoleGuard allowed={['admin', 'staff']}>
+                      <button
+                        onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      >
+                        Complete Consultation
+                      </button>
+                    </RoleGuard>
                   </div>
                 </div>
               ))}
@@ -292,3 +290,4 @@ export default function OPDPage() {
     </DashboardLayout>
   );
 }
+
