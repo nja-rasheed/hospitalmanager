@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hospital Management System",
   description: "Comprehensive hospital management prototype",
+  icons: {
+    icon: '/favicon.jpg',
+  },
 };
 
 export const viewport = {
