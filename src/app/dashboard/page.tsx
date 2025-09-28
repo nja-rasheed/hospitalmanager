@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAppointments, useBeds, useAdmissions, useInventory, usePatients } from '../../hooks/useHospitalData';
-import { Button, Input, Card, Select } from '../../components/UI';
+import { Card } from '../../components/UI';
 import { StatsCard } from '../../components/Table';
-import { Modal, Alert } from '../../components/Modal';
+import { Alert } from '../../components/Modal';
 import RoleGuard from '../../components/RoleGuard';
 
 export default function DashboardPage() {
